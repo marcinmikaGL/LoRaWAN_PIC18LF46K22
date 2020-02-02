@@ -1,0 +1,243 @@
+;*********************************************************************
+;*	Module for testing encrypt/decrypt functions using 
+;*     the AES (Rijndael) algorithm.
+;*
+;*********************************************************************
+;* FileName: AES.ex.txt (AES.asm)
+;* Dependencies: AES_VARS.inc,AES_MAC.inc,(AES_ENC.inc),(AES_DEC.inc)
+;* Processor: PIC18FXXX/18CXXX
+;* Assembler: MPASMWIN 02.70.02 or higher
+;* Linker: MPLINK 2.33.00 or higher
+;* Company: Microchip Technology, Inc.
+;*
+;* Software License Agreement
+;*
+;* The software supplied herewith by Microchip Technology Incorporated
+;* (the “Company”) for its PICmicro® Microcontroller is intended and
+;* supplied to you, the Company’s customer, for use solely and
+;* exclusively on Microchip PICmicro Microcontroller products. The
+;* software is owned by the Company and/or its supplier, and is
+;* protected under applicable copyright laws. All rights are reserved.
+;* Any use in violation of the foregoing restrictions may subject the
+;* user to criminal sanctions under applicable laws, as well as to
+;* civil liability for the breach of the terms and conditions of this
+;* license.
+;*
+;* Microchip Technology Inc. (“Microchip”) licenses this software to 
+;* you solely for use with Microchip products.  The software is owned 
+;* by Microchip and is protected under applicable copyright laws.  
+;* All rights reserved.
+;*
+;* You may not export or re-export Software, technical data, direct 
+;* products thereof or any other items which would violate any applicable
+;* export control laws and regulations including, but not limited to, 
+;* those of the United States or United Kingdom.  You agree that it is
+;* your responsibility to obtain copies of and to familiarize yourself
+;* fully with these laws and regulations to avoid violation.
+;*
+;* SOFTWARE IS PROVIDED “AS IS.”  MICROCHIP EXPRESSLY DISCLAIM ANY 
+;* WARRANTY OF ANY KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING BUT NOT 
+;* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+;* PARTICULAR PURPOSE, OR NON-INFRINGEMENT. IN NO EVENT SHALL MICROCHIP
+;* BE LIABLE FOR ANY INCIDENTAL, SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES,
+;* LOST PROFITS OR LOST DATA, HARM TO YOUR EQUIPMENT, COST OF PROCUREMENT
+;* OF SUBSTITUTE GOODS, TECHNOLOGY OR SERVICES, ANY CLAIMS BY THIRD PARTIES
+;* (INCLUDING BUT NOT LIMITED TO ANY DEFENSE THEREOF), ANY CLAIMS FOR 
+;* INDEMNITY OR CONTRIBUTION, OR OTHER SIMILAR COSTS. 
+;*
+;*
+;* Author Date Comment
+;*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;* Author Name 		Date		Comment
+;* David Flowers	06/07/04	initial revision
+;********************************************************************/
+;;;;;;; Assembler directives ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+        #include P18CXXX.inc
+
+;;;;;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;; Macro definitions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+	#include AESdef.inc
+	#include AES.inc
+
+;;;;;;; Vectors ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+RESET_VECTOR	CODE	0x0000
+	goto Main
+
+;************************** Main *********************************************
+MAINLINE	CODE	0x0038
+Main:
+	rcall	loadTestData
+	rcall	loadKey
+#ifdef ENCODE
+	call	AESEncrypt
+#endif
+
+#ifdef DECODE
+#ifdef CALCKEY
+	rcall	loadKey
+	call	AESCalcDecryptKey
+#else
+	rcall	loadDecryptKey
+#endif
+	call	AESDecrypt
+#endif
+	bra 	$
+
+;***************************************************************************
+; Function: void loadTestData(void)
+;
+; PreCondition: none
+;
+; Input: none
+;
+; Output: none
+;
+; Side Effects: block values are changed
+;
+; Stack Requirements: 1 level deep
+;
+; Overview: load data block values with the info needing encryption
+;***************************************************************************
+loadTestData:
+	movlw	0x0
+	movwf	block+0x0
+	movlw	0x1
+	movwf	block+0x1
+	movlw	0x2
+	movwf	block+0x2
+	movlw	0x3
+	movwf	block+0x3
+	movlw	0x4
+	movwf	block+0x4
+	movlw	0x5
+	movwf	block+0x5
+	movlw	0x6
+	movwf	block+0x6
+	movlw	0x7
+	movwf	block+0x7
+	movlw	0x8
+	movwf	block+0x8
+	movlw	0x09
+	movwf	block+0x9
+	movlw	0x0a
+	movwf	block+0xA
+	movlw	0xb
+	movwf	block+0xB
+	movlw	0x0c
+	movwf	block+0xC
+	movlw	0x0d
+	movwf	block+0xD
+	movlw	0x0e
+	movwf	block+0xE
+	movlw	0x0f
+	movwf	block+0xF
+	return
+
+;***************************************************************************
+; Function: void loadKey(void)
+;
+; PreCondition: none
+;
+; Input: none
+;
+; Output: none
+;
+; Side Effects: key values are changed
+;
+; Stack Requirements: 1 level deep
+;
+; Overview: load key variable with the encryption key
+;***************************************************************************
+loadKey:
+	movlw	0x0
+	movwf	key+0x0
+	movlw	0x01
+	movwf	key+0x1
+	movlw	0x02
+	movwf	key+0x2
+	movlw	0x03
+	movwf	key+0x3
+	movlw	0x04
+	movwf	key+0x4
+	movlw	0x05
+	movwf	key+0x5
+	movlw	0x06
+	movwf	key+0x6
+	movlw	0x07
+	movwf	key+0x7
+	movlw	0x08
+	movwf	key+0x8
+	movlw	0x09
+	movwf	key+0x9
+	movlw	0x0a
+	movwf	key+0xA
+	movlw	0x0b
+	movwf	key+0xB
+	movlw	0x0c
+	movwf	key+0xC
+	movlw	0x0d
+	movwf	key+0xD
+	movlw	0x0e
+	movwf	key+0xE
+	movlw	0x0f
+	movwf	key+0xF
+	return
+
+;***************************************************************************
+; Function: void loadDecryptKey(void)
+;
+; PreCondition: none
+;
+; Input: none
+;
+; Output: none
+;
+; Side Effects: key values are changed
+;
+; Stack Requirements: 1 level deep
+;
+; Overview: load key variable with the decryption key
+;***************************************************************************
+
+#ifndef calcKey
+loadDecryptKey:
+	movlw	0x13
+	movwf	key+0x0
+	movlw	0x011
+	movwf	key+0x1
+	movlw	0x01d
+	movwf	key+0x2
+	movlw	0x7f
+	movwf	key+0x3
+	movlw	0xe3
+	movwf	key+0x4
+	movlw	0x94
+	movwf	key+0x5
+	movlw	0x4a
+	movwf	key+0x6
+	movlw	0x17
+	movwf	key+0x7
+	movlw	0xf3
+	movwf	key+0x8
+	movlw	0x07
+	movwf	key+0x9
+	movlw	0xa7
+	movwf	key+0xA
+	movlw	0x8b
+	movwf	key+0xB
+	movlw	0x4d
+	movwf	key+0xC
+	movlw	0x2b
+	movwf	key+0xD
+	movlw	0x30
+	movwf	key+0xE
+	movlw	0xc5
+	movwf	key+0xF
+	return
+#endif
+
+	end
